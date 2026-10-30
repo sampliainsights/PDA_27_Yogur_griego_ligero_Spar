@@ -52,6 +52,7 @@ button,input{font:inherit;color:inherit}
 .status{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--ink-50);margin-bottom:12px}
 .status i{width:8px;height:8px;border-radius:50%;background:var(--neutral);flex:none}
 .status.live i{background:var(--dusk)} .status.local i{background:var(--melon)}
+.status.live{display:none}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--paper);border-radius:3px;padding:9px 14px;font-family:var(--font-head);font-weight:700;font-size:.86rem;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;transition:transform 160ms var(--ease-out),background-color 160ms ease}
 .btn:active{transform:scale(.97)}
 .btn.primary{background:var(--rasp);border-color:var(--rasp);color:#fff}
@@ -608,7 +609,7 @@ const CONFIG = {
   // Solo se leen las columnas A a I de la hoja (de «Marca temporal» a «Sentimiento»)
   maxCols: 9,
   // Personas que dicen no haber recibido o probado el producto: sus respuestas no valoran el producto y se excluyen del informe
-  notReceived: /no me (lo |mo )?(han )?(dado|dieron|entregaron)|no (lo )?(he |se me )?(ha )?recibido|no lo he probado|no lo probe|no puedo valorar|no he recibido|no se me entrego|no he podido probar|no recibi el producto|se olvidaron de ponerme|no puedo dar una opinion porque no recibi/,
+  notReceived: /no me (lo |mo )?(han )?(dado|dieron|entregaron)|no (lo )?(he |se me )?(ha )?recib|no lo he probado|no lo probe|no puedo valorar|no se me entrego|no he podido probar|se olvidaron de ponerme|no puedo dar una opinion porque no recib/,
   // Hoja de respuestas de Google Forms: las cabeceras son el texto de la pregunta, no un question_id
   attrs: [
     { k: 'glob', label: 'Valoración global',        short: 'Valoración global', art: 'La valoración global',      rx: /valoraci[oó]n global/i, q: '¿Cuál es tu valoración global de este producto?' },
@@ -773,6 +774,7 @@ function buildRows(matrix) {
 
   const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return (n >= 1 && n <= 5) ? n : null; };
   const rows = []; state.excluded = 0;
+  state.totalSourceRows = matrix.slice(hi + 1).length;
   matrix.slice(hi + 1).forEach(r => {
     const get = k => idx[k] == null ? '' : String(r[idx[k]] ?? '').trim();
     if (CONFIG.notReceived && CONFIG.notReceived.test(norm(get('porque')))) { state.excluded++; return; }
@@ -1181,7 +1183,7 @@ function renderInsights() {
 function renderHero() {
   const sel = rowsSel(), all = rowsAll();
   const si = all.filter(r => r.compra === 'Sí').length, n = all.filter(r => r.compra).length;
-  $('#factN').textContent = sel.length + (sel.length !== state.rows.length ? ` de ${state.rows.length}` : '');
+  $('#factN').textContent = state.totalSourceRows ?? state.rows.length;
   $('#factBuy').textContent = pct(si, n);
   $$('[data-seal-n]').forEach(el => el.textContent = sel.length);
   const nSi = all.filter(r => r.compra === 'Sí').length, nNo = all.filter(r => r.compra === 'No').length;
